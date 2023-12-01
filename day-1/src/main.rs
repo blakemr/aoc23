@@ -14,19 +14,13 @@ fn main() {
 fn part_1(input: &str) -> u32 {
     let mut sum = 0;
     for line in input.lines() {
-        let first = line
-            .chars()
-            .find(|c| c.is_numeric())
-            .unwrap()
-            .to_digit(10)
-            .unwrap();
+        let first = line.chars().filter_map(|c| c.to_digit(10)).next().unwrap();
+
         let last = line
             .chars()
-            .rfind(|c| c.is_numeric())
-            .unwrap()
-            .to_digit(10)
+            .filter_map(|c| c.to_digit(10))
+            .next_back()
             .unwrap();
-
         sum += (first * 10) + last;
     }
 
@@ -48,9 +42,8 @@ fn part_2(input: &str) -> u32 {
             first = keywords.iter().find(|first| line.starts_with(*first));
         }
 
-        let first = first.unwrap();
-
         let first = first
+            .unwrap()
             .replace("one", "1")
             .replace("two", "2")
             .replace("three", "3")
@@ -59,11 +52,9 @@ fn part_2(input: &str) -> u32 {
             .replace("six", "6")
             .replace("seven", "7")
             .replace("eight", "8")
-            .replace("nine", "9");
-
-        let first = first
+            .replace("nine", "9")
             .chars()
-            .find(|c| c.is_numeric())
+            .next()
             .unwrap()
             .to_digit(10)
             .unwrap();
@@ -75,9 +66,8 @@ fn part_2(input: &str) -> u32 {
             last = keywords.iter().find(|last| line.ends_with(*last));
         }
 
-        let last = last.unwrap();
-
         let last = last
+            .unwrap()
             .replace("one", "1")
             .replace("two", "2")
             .replace("three", "3")
@@ -86,11 +76,9 @@ fn part_2(input: &str) -> u32 {
             .replace("six", "6")
             .replace("seven", "7")
             .replace("eight", "8")
-            .replace("nine", "9");
-
-        let last = last
+            .replace("nine", "9")
             .chars()
-            .rfind(|c| c.is_numeric())
+            .next()
             .unwrap()
             .to_digit(10)
             .unwrap();
