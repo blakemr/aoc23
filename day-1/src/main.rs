@@ -37,22 +37,18 @@ fn part_2(input: &str) -> u32 {
             first = keywords.iter().find(|first| line.starts_with(*first));
         }
 
-        let first = first
-            .unwrap()
-            .replace("one", "1")
-            .replace("two", "2")
-            .replace("three", "3")
-            .replace("four", "4")
-            .replace("five", "5")
-            .replace("six", "6")
-            .replace("seven", "7")
-            .replace("eight", "8")
-            .replace("nine", "9")
-            .chars()
-            .next()
-            .unwrap()
-            .to_digit(10)
-            .unwrap();
+        let first = match *first.unwrap() {
+            "one" => 1,
+            "two" => 2,
+            "three" => 3,
+            "four" => 4,
+            "five" => 5,
+            "six" => 6,
+            "seven" => 7,
+            "eight" => 8,
+            "nine" => 9,
+            s => s.chars().next().unwrap().to_digit(10).unwrap(),
+        };
 
         let mut last = keywords.iter().find(|last| line.ends_with(*last));
 
@@ -61,22 +57,18 @@ fn part_2(input: &str) -> u32 {
             last = keywords.iter().find(|last| line.ends_with(*last));
         }
 
-        let last = last
-            .unwrap()
-            .replace("one", "1")
-            .replace("two", "2")
-            .replace("three", "3")
-            .replace("four", "4")
-            .replace("five", "5")
-            .replace("six", "6")
-            .replace("seven", "7")
-            .replace("eight", "8")
-            .replace("nine", "9")
-            .chars()
-            .next()
-            .unwrap()
-            .to_digit(10)
-            .unwrap();
+        let last = match *last.unwrap() {
+            "one" => 1,
+            "two" => 2,
+            "three" => 3,
+            "four" => 4,
+            "five" => 5,
+            "six" => 6,
+            "seven" => 7,
+            "eight" => 8,
+            "nine" => 9,
+            s => s.chars().next().unwrap().to_digit(10).unwrap(),
+        };
 
         sum += (first * 10) + last;
     }
