@@ -35,22 +35,17 @@ fn part_1(input: &str) -> u32 {
 
 fn part_2(input: &str) -> u32 {
     let mut sum = 0;
+    let keywords = [
+        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "one", "two", "three", "four", "five",
+        "six", "seven", "eight", "nine",
+    ];
+
     for mut line in input.lines() {
-        let mut first = [
-            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "one", "two", "three", "four",
-            "five", "six", "seven", "eight", "nine",
-        ]
-        .iter()
-        .find(|first| line.starts_with(*first));
+        let mut first = keywords.iter().find(|first| line.starts_with(*first));
 
         while first.is_none() && !line.is_empty() {
             line = &line[1..];
-            first = [
-                "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "one", "two", "three", "four",
-                "five", "six", "seven", "eight", "nine",
-            ]
-            .iter()
-            .find(|first| line.starts_with(*first));
+            first = keywords.iter().find(|first| line.starts_with(*first));
         }
 
         let first = first.unwrap();
@@ -73,21 +68,11 @@ fn part_2(input: &str) -> u32 {
             .to_digit(10)
             .unwrap();
 
-        let mut last = [
-            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "one", "two", "three", "four",
-            "five", "six", "seven", "eight", "nine",
-        ]
-        .iter()
-        .find(|last| line.ends_with(*last));
+        let mut last = keywords.iter().find(|last| line.ends_with(*last));
 
         while last.is_none() && !line.is_empty() {
             line = &line[..line.len() - 1];
-            last = [
-                "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "one", "two", "three", "four",
-                "five", "six", "seven", "eight", "nine",
-            ]
-            .iter()
-            .find(|last| line.ends_with(*last));
+            last = keywords.iter().find(|last| line.ends_with(*last));
         }
 
         let last = last.unwrap();
