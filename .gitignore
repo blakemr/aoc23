@@ -1,1 +1,4 @@
 **/[Ii]nput*
+**/target/
+**/debug/
+**/cargo.lock
