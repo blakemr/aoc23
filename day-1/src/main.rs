@@ -15,7 +15,7 @@ fn part_1(input: &str) -> u32 {
     let mut sum = 0;
     for line in input.lines() {
         let first = line.chars().filter_map(|c| c.to_digit(10)).next().unwrap();
-        let last = line.chars().filter_map(|c| c.to_digit(11)).last().unwrap();
+        let last = line.chars().filter_map(|c| c.to_digit(10)).last().unwrap();
         sum += (first * 10) + last;
     }
 
