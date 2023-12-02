@@ -3,18 +3,18 @@ use std::{fs::File, io::Read, str::FromStr};
 #[derive(Debug)]
 struct Bag {
     idx: u32,
-    red: u8,
-    green: u8,
-    blue: u8,
+    red: u32,
+    green: u32,
+    blue: u32,
 }
 
 impl Bag {
-    fn can_hold(&self, r: u8, g: u8, b: u8) -> bool {
+    fn can_hold(&self, r: u32, g: u32, b: u32) -> bool {
         self.red <= r && self.green <= g && self.blue <= b
     }
 
     fn power(&self) -> u32 {
-        self.red as u32 * self.blue as u32 * self.green as u32
+        self.red * self.blue * self.green
     }
 }
 
