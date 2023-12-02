@@ -1,5 +1,6 @@
-use std::{fs::File, io::Read};
+use std::{fs::File, io::Read, str::FromStr};
 
+#[derive(Debug)]
 struct Bag {
     idx: u32,
     red: u8,
@@ -8,8 +9,23 @@ struct Bag {
 }
 
 impl Bag {
-    fn new(input: &str) -> Self {
-        let (idx, games) = input.split_once(':').unwrap();
+    fn can_hold(&self, r: u8, g: u8, b: u8) -> bool {
+        self.red <= r && self.green <= g && self.blue <= b
+    }
+
+    fn power(&self) -> u32 {
+        self.red as u32 * self.blue as u32 * self.green as u32
+    }
+}
+
+#[derive(Debug)]
+struct BagParseError;
+
+impl FromStr for Bag {
+    type Err = BagParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (idx, games) = s.split_once(':').unwrap();
 
         let (_, idx) = idx
             .split_once("Game ")
@@ -31,16 +47,12 @@ impl Bag {
             }
         }
 
-        Bag {
+        Ok(Bag {
             idx,
             red,
             green,
             blue,
-        }
-    }
-
-    fn can_hold(&self, r: u8, g: u8, b: u8) -> bool {
-        self.red <= r && self.green <= g && self.blue <= b
+        })
     }
 }
 
@@ -59,7 +71,7 @@ fn part_1(input: &str) -> u32 {
     let mut sum = 0;
 
     for line in input.lines() {
-        let b = Bag::new(line);
+        let b: Bag = line.parse().unwrap();
         if b.can_hold(12, 13, 14) {
             sum += b.idx;
         }
@@ -72,9 +84,8 @@ fn part_2(input: &str) -> u32 {
     let mut sum = 0;
 
     for line in input.lines() {
-        let b = Bag::new(line);
-        let power: u32 = b.red as u32 * b.blue as u32 * b.green as u32;
-        sum += power;
+        let b: Bag = line.parse().unwrap();
+        sum += b.power();
     }
 
     sum
