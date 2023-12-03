@@ -22,38 +22,58 @@ struct Part {
 impl Part {
     fn part_value(&self, symbols: &HashMap<(usize, usize), char>) -> u32 {
         for idx in self.indicies.clone().into_iter() {
-            if symbols.get(&(idx.0.saturating_sub(1), idx.1)).is_some() {
-                return self.value;
-            }
-            if symbols.get(&(idx.0 + 1, idx.1)).is_some() {
-                return self.value;
-            }
-            if symbols.get(&(idx.0, idx.1.saturating_sub(1))).is_some() {
-                return self.value;
-            }
-            if symbols.get(&(idx.0, idx.1 + 1)).is_some() {
-                return self.value;
-            }
-            if symbols.get(&(idx.0.saturating_sub(1), idx.1 + 1)).is_some() {
-                return self.value;
-            }
-            if symbols.get(&(idx.0 + 1, idx.1 + 1)).is_some() {
-                return self.value;
-            }
-
-            if symbols
-                .get(&(idx.0.saturating_sub(1), idx.1.saturating_sub(1)))
-                .is_some()
-            {
-                return self.value;
-            }
-
-            if symbols.get(&(idx.0 + 1, idx.1.saturating_sub(1))).is_some() {
-                return self.value;
+            let xys = [
+                (idx.0.saturating_sub(1), idx.1.saturating_sub(1)),
+                (idx.0.saturating_sub(1), idx.1),
+                (idx.0.saturating_sub(1), idx.1 + 1),
+                (idx.0, idx.1.saturating_sub(1)),
+                (idx.0, idx.1 + 1),
+                (idx.0 + 1, idx.1.saturating_sub(1)),
+                (idx.0 + 1, idx.1),
+                (idx.0 + 1, idx.1 + 1),
+            ];
+            for xy in xys {
+                if symbols.get(&xy).is_some() {
+                    return self.value;
+                }
             }
         }
 
         0
+    }
+
+    fn adjacent_gears(
+        &self,
+        symbols: &HashMap<(usize, usize), char>,
+        gears: &mut HashMap<(usize, usize), Vec<u32>>,
+    ) {
+        for idx in self.indicies.clone().into_iter() {
+            let xys = [
+                (idx.0.saturating_sub(1), idx.1.saturating_sub(1)),
+                (idx.0.saturating_sub(1), idx.1),
+                (idx.0.saturating_sub(1), idx.1 + 1),
+                (idx.0, idx.1.saturating_sub(1)),
+                (idx.0, idx.1 + 1),
+                (idx.0 + 1, idx.1.saturating_sub(1)),
+                (idx.0 + 1, idx.1),
+                (idx.0 + 1, idx.1 + 1),
+            ];
+            for xy in xys {
+                if let Some(sym) = symbols.get(&xy) {
+                    if *sym == '*' {
+                        match gears.get_mut(&xy) {
+                            Some(v) => {
+                                v.push(self.value);
+                            }
+                            None => {
+                                gears.insert(xy, vec![self.value]);
+                            }
+                        }
+                        return;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -82,15 +102,6 @@ impl Piece {
 
         Some(piece)
     }
-
-    fn new_multi_symbol(s: &str) -> Vec<char> {
-        let mut out = Vec::new();
-        for c in s.chars() {
-            out.push(c);
-        }
-
-        out
-    }
 }
 
 struct Schematic {
@@ -118,10 +129,6 @@ impl FromStr for Schematic {
                             symbols.insert((i, j), c);
                         }
                     };
-                } else {
-                    for (k, c) in Piece::new_multi_symbol(sub).iter().enumerate() {
-                        symbols.insert((i, j + k), *c);
-                    }
                 }
             }
         }
@@ -142,7 +149,21 @@ fn part_1(input: &str) -> u32 {
 }
 
 fn part_2(input: &str) -> u32 {
-    todo!()
+    let schem: Schematic = input.parse().unwrap();
+
+    let mut sum = 0;
+    let mut gears = HashMap::new();
+    for (_, v) in schem.parts {
+        v.adjacent_gears(&schem.symbols, &mut gears);
+    }
+
+    for (_, v) in gears {
+        if v.len() == 2 {
+            sum += v.iter().product::<u32>();
+        }
+    }
+
+    sum
 }
 
 fn main() {
@@ -153,7 +174,7 @@ fn main() {
         .expect("Failed to read file.");
 
     dbg!(part_1(text.as_str()));
-    //dbg!(part_2(text.as_str()));
+    dbg!(part_2(text.as_str()));
 }
 
 #[cfg(test)]
@@ -195,6 +216,16 @@ mod tests {
 
     #[test]
     fn p2() {
-        todo!()
+        let input = "467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..";
+        assert_eq!(part_2(input), 467835);
     }
 }
