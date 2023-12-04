@@ -23,6 +23,8 @@ fn main() {
 mod tests {
     use super::*;
 
+    const input &str;
+
     #[test]
     fn p1() {
         todo!()
