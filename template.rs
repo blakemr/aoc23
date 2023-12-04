@@ -1,5 +1,13 @@
 use std::{fs::File, io::Read};
 
+fn part_1(input: &str) -> u32 {
+    todo!()
+}
+
+fn part_2(input: &str) -> u32 {
+    todo!()
+}
+
 fn main() {
     let mut text = String::new();
     File::open("input.txt")
@@ -9,14 +17,6 @@ fn main() {
 
     dbg!(part_1(text.as_str()));
     dbg!(part_2(text.as_str()));
-}
-
-fn part_1(input: &str) -> u32 {
-    todo!()
-}
-
-fn part_2(input: &str) -> u32 {
-    todo!()
 }
 
 #[cfg(test)]
