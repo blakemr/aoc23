@@ -23,7 +23,7 @@ fn main() {
 mod tests {
     use super::*;
 
-    const input &str;
+    const INPUT &str = "";
 
     #[test]
     fn p1() {
