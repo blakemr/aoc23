@@ -13,42 +13,39 @@ fn convert_seed_range(
     delta: u64,
     start: u64,
     end: u64,
-) -> (Option<Vec<Vec<u64>>>, Option<Vec<Vec<u64>>>) {
+) -> (Option<Vec<(u64, u64)>>, Option<Vec<(u64, u64)>>) {
     if end < source || start >= source + delta {
-        return (Some(vec![vec![start, end]]), None);
+        return (Some(vec![(start, end)]), None);
     }
 
     if start >= source && end <= source + delta {
         return (
             None,
-            Some(vec![vec![
+            Some(vec![(
                 destination + (start - source),
                 destination + (end - source),
-            ]]),
+            )]),
         );
     }
 
     if start >= source {
         return (
-            Some(vec![vec![source + delta, end]]),
-            Some(vec![vec![
-                destination + (start - source),
-                destination + delta,
-            ]]),
+            Some(vec![(source + delta, end)]),
+            Some(vec![(destination + (start - source), destination + delta)]),
         );
     }
 
     if end <= source + delta {
         return (
-            Some(vec![vec![start, source]]),
-            Some(vec![vec![destination, destination + (end - source)]]),
+            Some(vec![(start, source)]),
+            Some(vec![(destination, destination + (end - source))]),
         );
     }
 
     if start < source && end > source + delta {
         return (
-            Some(vec![vec![start, source], vec![source + delta, end]]),
-            Some(vec![vec![destination, destination + delta]]),
+            Some(vec![(start, source), (source + delta, end)]),
+            Some(vec![(destination, destination + delta)]),
         );
     }
 
@@ -123,34 +120,48 @@ fn part_1(input: &str) -> u64 {
 fn part_2(input: &str) -> u64 {
     let maps: Maps = input.parse().unwrap();
 
-    let mut result: u64 = u64::MAX;
+    // Process all the seeds at once
+    // with a vec of ranges (locations), remap each once using the mappings.
+    // at the end locations will be a vec of all the range sets
+    // then flatten().min()
+    let mut locations: Vec<(u64, u64)> = maps
+        .seeds
+        .chunks_exact(2)
+        .map(|c| (c[0], c[0] + c[1]))
+        .collect();
 
-    for seed_range in maps.seeds.chunks_exact(2) {
-        let (seed_start, seed_end) = (seed_range[0], seed_range[0] + seed_range[1]);
+    for mappings in maps.conversions {
+        let mut new_locations: Vec<(u64, u64)> = Vec::new();
+        for (start, end) in locations.iter() {
+            let mut unchanged = vec![(*start, *end)];
+            for mapping in &mappings {
+                if unchanged.is_empty() {
+                    break;
+                }
+                let mut new_unchanged = Vec::new();
 
-        let mut set_values = Vec::new();
-        let mut values = vec![vec![seed_start, seed_end]];
-        for con in &maps.conversions {
-            let mut new_values = Vec::new();
-            for mapping in con {
-                for set in &values {
-                    let (stopped, ranges) =
-                        convert_seed_range(mapping[0], mapping[1], mapping[2], set[0], set[1]);
+                for (start, end) in unchanged {
+                    let (ranges, changed) =
+                        convert_seed_range(mapping[0], mapping[1], mapping[2], start, end);
 
-                    if let Some(stopped) = stopped {
-                        set_values.extend(stopped);
-                    }
                     if let Some(ranges) = ranges {
-                        new_values.extend(ranges);
+                        new_unchanged.extend(ranges);
+                    }
+                    if let Some(changed) = changed {
+                        new_locations.extend(changed);
                     }
                 }
-            }
-            values = new_values;
-        }
-        result = result.min(*set_values.iter().flatten().min().unwrap());
-    }
 
-    result
+                unchanged = new_unchanged;
+            }
+            // Grab the remainder that never get remapped
+            if !unchanged.is_empty() {
+                new_locations.extend(unchanged);
+            }
+        }
+        locations = new_locations;
+    }
+    *locations.iter().map(|(m, _)| m).min().unwrap()
 }
 
 fn main() {
