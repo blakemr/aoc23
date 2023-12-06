@@ -11,13 +11,49 @@ fn convert_seed_range(
     destination: u64,
     source: u64,
     delta: u64,
-    input: u64,
-    range: u64,
-) -> Option<u64> {
-    match input.checked_sub(source) {
-        Some(x) => (x < delta).then_some(destination + (input - source)),
-        None => None,
+    start: u64,
+    end: u64,
+) -> (Option<Vec<Vec<u64>>>, Option<Vec<Vec<u64>>>) {
+    if end < source || start >= source + delta {
+        return (Some(vec![vec![start, end]]), None);
     }
+
+    if start >= source && end <= source + delta {
+        return (
+            None,
+            Some(vec![vec![
+                destination + (start - source),
+                destination + (end - source),
+            ]]),
+        );
+    }
+
+    if start >= source {
+        return (
+            Some(vec![vec![source + delta, end]]),
+            Some(vec![vec![
+                destination + (start - source),
+                destination + delta,
+            ]]),
+        );
+    }
+
+    if end <= source + delta {
+        return (
+            Some(vec![vec![start, source]]),
+            Some(vec![vec![destination, destination + (end - source)]]),
+        );
+    }
+
+    if start < source && end > source + delta {
+        return (
+            Some(vec![vec![start, source], vec![source + delta, end]]),
+            Some(vec![vec![destination, destination + delta]]),
+        );
+    }
+
+    dbg!(destination, source, delta, start, end);
+    unreachable!()
 }
 
 #[derive(Debug)]
@@ -89,16 +125,29 @@ fn part_2(input: &str) -> u64 {
 
     let mut result: u64 = u64::MAX;
 
-    for mut seed in maps.seeds {
+    for seed_range in maps.seeds.chunks_exact(2) {
+        let (seed_start, seed_end) = (seed_range[0], seed_range[0] + seed_range[1]);
+
+        let mut set_values = Vec::new();
+        let mut values = vec![vec![seed_start, seed_end]];
         for con in &maps.conversions {
+            let mut new_values = Vec::new();
             for mapping in con {
-                if let Some(x) = convert_seed(mapping[0], mapping[1], mapping[2], seed) {
-                    seed = x;
-                    break;
+                for set in &values {
+                    let (stopped, ranges) =
+                        convert_seed_range(mapping[0], mapping[1], mapping[2], set[0], set[1]);
+
+                    if let Some(stopped) = stopped {
+                        set_values.extend(stopped);
+                    }
+                    if let Some(ranges) = ranges {
+                        new_values.extend(ranges);
+                    }
                 }
             }
+            values = new_values;
         }
-        result = result.min(seed);
+        result = result.min(*set_values.iter().flatten().min().unwrap());
     }
 
     result
@@ -119,7 +168,7 @@ fn main() {
 mod tests {
     use super::*;
 
-    const input: &str = "seeds: 79 14 55 13\r
+    const INPUT: &str = "seeds: 79 14 55 13\r
 \r
 seed-to-soil map:
 50 98 2
@@ -163,16 +212,24 @@ humidity-to-location map:
 
     #[test]
     fn test_parse() {
-        dbg!(input.parse::<Maps>().unwrap());
+        dbg!(INPUT.parse::<Maps>().unwrap());
     }
 
     #[test]
+    fn test_part_2_parse() {
+        //dbg!(part2map(input).unwrap());
+    }
+
+    #[test]
+    fn test_range_comparisons() {}
+
+    #[test]
     fn p1() {
-        assert_eq!(part_1(input), 35)
+        assert_eq!(part_1(INPUT), 35)
     }
 
     #[test]
     fn p2() {
-        todo!()
+        assert_eq!(part_2(INPUT), 46)
     }
 }
