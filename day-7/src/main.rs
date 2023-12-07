@@ -1,10 +1,4 @@
-use std::{
-    cmp::Ordering::{Equal, Greater, Less},
-    collections::HashMap,
-    fs::File,
-    io::Read,
-    str::FromStr,
-};
+use std::{collections::HashMap, fs::File, io::Read, str::FromStr};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct Hand {
