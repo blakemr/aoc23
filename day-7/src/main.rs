@@ -30,7 +30,7 @@ impl FromStr for Hand {
                 'A' => 14,
                 'K' => 13,
                 'Q' => 12,
-                'J' => 11,
+                'J' => 1,
                 'T' => 10,
                 n => n.to_digit(10).unwrap() as u8,
             })
@@ -39,15 +39,22 @@ impl FromStr for Hand {
             .unwrap();
 
         let mut strength_hash = HashMap::new();
+        let mut j_count = 0;
         cards.iter().for_each(|c| {
-            if strength_hash.contains_key(c) {
+            if *c == 1 {
+                j_count += 1;
+            } else if strength_hash.contains_key(c) {
                 strength_hash.insert(c, strength_hash[c] + 1);
             } else {
                 strength_hash.insert(c, 1);
             }
         });
 
-        let strength = if strength_hash.len() == 1 {
+        for key in strength_hash.clone().keys() {
+            strength_hash.insert(*key, strength_hash[key] + j_count);
+        }
+
+        let strength = if strength_hash.len() <= 1 {
             7
         } else if strength_hash.len() == 2 && strength_hash.values().any(|v| *v == 4) {
             6
@@ -87,7 +94,7 @@ fn part_1(input: &str) -> u32 {
 }
 
 fn part_2(input: &str) -> u32 {
-    todo!()
+    part_1(input)
 }
 
 fn main() {
@@ -98,7 +105,7 @@ fn main() {
         .expect("Failed to read file.");
 
     dbg!(part_1(text.as_str()));
-    //dbg!(part_2(text.as_str()));
+    dbg!(part_2(text.as_str()));
 }
 
 #[cfg(test)]
@@ -136,6 +143,6 @@ QQQJA 483";
 
     #[test]
     fn p2() {
-        todo!()
+        assert_eq!(part_2(INPUT), 5905);
     }
 }
