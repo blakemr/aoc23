@@ -1,13 +1,15 @@
+use num::integer::lcm;
 use std::{collections::HashMap, fs::File, io::Read, str::FromStr, string::ParseError};
 
 #[derive(Debug)]
 struct Map {
     directions: Vec<char>,
     elements: HashMap<String, (String, String)>,
+    distances: HashMap<String, (usize, Vec<usize>)>,
 }
 
 impl Map {
-    fn steps(&self, start: String, end: String) -> u32 {
+    fn steps(&self, start: &String, end: &String) -> u32 {
         let mut steps = 0;
         let mut idx = 0;
         let mut current = start;
@@ -19,8 +21,8 @@ impl Map {
             steps += 1;
             // Update instruction and elem
             match self.directions[idx] {
-                'L' => current = self.elements[&current].0.clone(),
-                'R' => current = self.elements[&current].1.clone(),
+                'L' => current = &self.elements[current].0,
+                'R' => current = &self.elements[current].1,
                 _ => panic!(),
             }
             idx = (idx + 1) % self.directions.len();
@@ -29,36 +31,124 @@ impl Map {
         steps
     }
 
-    fn ghost_steps(&self, start: char, end: char) -> u32 {
+    fn steps_to_suffix(&self, start: &String, end: &char) -> u32 {
         let mut steps = 0;
         let mut idx = 0;
-        let mut currents: Vec<String> = self
-            .elements
-            .keys()
-            .filter(|k| k.ends_with(start))
-            .cloned()
-            .collect();
-
+        let mut current = start;
         loop {
-            if currents.iter().all(|loc| loc.ends_with(end)) {
+            // Check if we're there
+            if current.ends_with(*end) {
                 break;
             }
-
             steps += 1;
-
-            currents = currents
-                .iter()
-                .map(|elem| match self.directions[idx] {
-                    'L' => self.elements[elem].0.clone(),
-                    'R' => self.elements[elem].1.clone(),
-                    _ => panic!(),
-                })
-                .collect();
-
+            // Update instruction and elem
+            match self.directions[idx] {
+                'L' => current = &self.elements[current].0,
+                'R' => current = &self.elements[current].1,
+                _ => panic!(),
+            }
+            dbg!(current);
             idx = (idx + 1) % self.directions.len();
         }
 
         steps
+    }
+
+    fn set_distances(&self, start: &char, end: &char) -> HashMap<String, (usize, Vec<usize>)> {
+        self.elements
+            .keys()
+            .filter(|k| k.ends_with(*start))
+            .cloned()
+            .map(|k| {
+                let mut k_vec = Vec::new();
+                let mut visited = Vec::new();
+                let mut current = k.clone();
+                let mut idx = 0;
+                let mut steps = 0;
+
+                loop {
+                    current = match self.directions[idx] {
+                        'L' => self.elements[&current].0.clone(),
+                        'R' => self.elements[&current].1.clone(),
+                        _ => unreachable!(),
+                    };
+                    steps += 1;
+                    if current.ends_with(*end) {
+                        k_vec.push(steps);
+                        steps = 0;
+                    }
+
+                    if visited.contains(&(current.clone(), idx)) {
+                        break;
+                    } else {
+                        visited.push((current.clone(), idx));
+                    }
+
+                    idx = (idx + 1) % self.directions.len();
+                }
+
+                (
+                    k,
+                    (
+                        visited
+                            .iter()
+                            .position(|x| x == &(current.clone(), idx))
+                            .unwrap(),
+                        k_vec,
+                    ),
+                )
+            })
+            .collect()
+    }
+
+    fn ghost_steps(&self, start: &char, end: &char) -> usize {
+        todo!();
+
+        // Debug output has shown I can just use LCM
+
+        //        let mut steps = 0;
+        //let mut idx = 0;
+        //let mut currents: Vec<String> = self
+        //.distances
+        //.keys()
+        //.filter(|k| k.ends_with(*start))
+        //.cloned()
+        //.collect();
+
+        //loop {
+        //if currents.iter().all(|loc| loc.ends_with(*end)) {
+        //break;
+        //}
+
+        //let next_match = currents
+        //.iter()
+        //.map(|s| match self.directions[idx] {
+        //'L' => self.distances[s].0,
+        //'R' => self.distances[s].1,
+        //_ => unreachable!(),
+        //})
+        //.min()
+        //.unwrap();
+
+        //dbg!(next_match);
+
+        //steps += next_match;
+
+        //for _ in 0..next_match {
+        //currents = currents
+        //.iter()
+        //.map(|elem| match self.directions[idx] {
+        //'L' => self.elements[elem].0.clone(),
+        //'R' => self.elements[elem].1.clone(),
+        //_ => unreachable!(),
+        //})
+        //.collect();
+
+        //idx = (idx + 1) % self.directions.len();
+        //}
+        //}
+
+        //steps
     }
 }
 
@@ -80,10 +170,15 @@ impl FromStr for Map {
             elements.insert(k.to_string(), (v.0.to_string(), v.1.to_string()));
         });
 
-        Ok(Self {
+        let mut m = Self {
             directions,
             elements,
-        })
+            distances: HashMap::new(),
+        };
+
+        m.distances = m.set_distances(&'A', &'Z');
+
+        Ok(m)
     }
 }
 
@@ -91,11 +186,17 @@ fn part_1(input: &str) -> u32 {
     input
         .parse::<Map>()
         .unwrap()
-        .steps("AAA".to_string(), "ZZZ".to_string())
+        .steps(&"AAA".to_string(), &"ZZZ".to_string())
 }
 
-fn part_2(input: &str) -> u32 {
-    input.parse::<Map>().unwrap().ghost_steps('A', 'Z')
+fn part_2(input: &str) -> isize {
+    let binding = input.parse::<Map>().unwrap();
+    let d = binding.distances.iter().map(|(_, (_, v))| v[0] as isize);
+
+    let mut l = 1;
+    d.for_each(|n| l = lcm(l, n));
+
+    l
 }
 
 fn main() {
@@ -142,7 +243,7 @@ XXX = (XXX, XXX)";
 
     #[test]
     fn test_parse() {
-        dbg!(INPUT.parse::<Map>());
+        dbg!(INPUT_2.parse::<Map>());
     }
 
     #[test]
