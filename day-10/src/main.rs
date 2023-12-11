@@ -141,69 +141,6 @@ impl Maze {
         }
     }
 
-    fn get_directions(&self) -> Vec<Direction> {
-        let mut position = self.start;
-        let mut direction;
-
-        if "F-L".contains(self.map[position.0][position.1 - 1]) {
-            direction = Direction::Left;
-        } else if "7-J".contains(self.map[position.0][position.1]) {
-            direction = Direction::Right;
-        } else {
-            direction = Direction::Down;
-        }
-        let mut ring = vec![direction];
-
-        loop {
-            match direction {
-                Direction::Left => position.1 -= 1,
-                Direction::Right => position.1 += 1,
-                Direction::Up => position.0 -= 1,
-                Direction::Down => position.0 += 1,
-            }
-
-            match self.map[position.0][position.1] {
-                '|' | '-' => {}
-                'L' => {
-                    if direction == Direction::Down {
-                        direction = Direction::Right;
-                    } else {
-                        direction = Direction::Up;
-                    }
-                }
-                'J' => {
-                    if direction == Direction::Down {
-                        direction = Direction::Left;
-                    } else {
-                        direction = Direction::Up;
-                    }
-                }
-                '7' => {
-                    if direction == Direction::Up {
-                        direction = Direction::Left;
-                    } else {
-                        direction = Direction::Down;
-                    }
-                }
-                'F' => {
-                    if direction == Direction::Up {
-                        direction = Direction::Right;
-                    } else {
-                        direction = Direction::Down;
-                    }
-                }
-                'S' => return ring,
-                _ => {
-                    dbg!(self.map[position.0][position.1]);
-                    panic!();
-                }
-            }
-
-            //dbg!(&direction, self.map[position.0][position.1], position);
-            ring.push(direction);
-        }
-    }
-
     fn get_blanks(&self) -> HashSet<(usize, usize)> {
         let mut position = self.start;
         let mut blanks = HashSet::new();
@@ -322,55 +259,16 @@ impl Maze {
         }
     }
 
-    fn check_winding(
-        &self,
-        ring: &[(usize, usize)],
-        directions: &[Direction],
-        point: &(usize, usize),
-    ) -> bool {
-        let mut crosses = [0, 0, 0, 0];
-
-        for (i, node) in ring.iter().enumerate() {
-            if node.1 == point.1 && node.0 < point.0 {
-                // node above
-                match directions[i] {
-                    Direction::Left => crosses[2] += 1,
-                    Direction::Right => crosses[2] -= 1,
-                    _ => {}
-                }
-            } else if node.1 == point.1 && node.0 > point.0 {
-                // node below
-                match directions[i] {
-                    Direction::Left => crosses[3] -= 1,
-                    Direction::Right => crosses[3] += 1,
-                    _ => {}
-                }
-            }
-            if node.0 == point.0 && node.1 < point.1 {
-                // node left
-                match directions[i] {
-                    Direction::Up => crosses[0] += 1,
-                    Direction::Down => crosses[0] -= 1,
-                    _ => {}
-                }
-            } else if node.0 == point.0 && node.1 > point.1 {
-                // node right
-                match directions[i] {
-                    Direction::Up => crosses[1] -= 1,
-                    Direction::Down => crosses[1] += 1,
-                    _ => {}
-                }
-            }
-            //dbg!(crosses);
-        }
-
-        dbg!(crosses);
-        crosses == [1, 1, 1, 1] || crosses == [-1, -1, -1, -1]
+    fn is_inside_loop(&self, ring: &[(usize, usize)], point: &(usize, usize)) -> bool {
+        ring.iter()
+            .filter(|(y, x)| *y == point.0 && *x > point.1)
+            .count()
+            % 2
+            == 1
     }
 
     fn find_voids_in_loop(&self) -> usize {
         let ring = self.get_loop();
-        let directions = self.get_directions();
         let mut counted = HashSet::new();
         let blanks: HashSet<(usize, usize)> = self
             .get_blanks()
@@ -383,7 +281,8 @@ impl Maze {
         for blank in blanks {
             let mut current = HashSet::new();
             if self.check_void(&ring, &counted, &mut current, blank) {
-                current.retain(|c| self.check_winding(ring.as_slice(), directions.as_slice(), c));
+                dbg!("s");
+                current.retain(|c| self.is_inside_loop(ring.as_slice(), c));
                 voids += current.len();
                 dbg!(&current);
             }
